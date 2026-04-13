@@ -1,14 +1,15 @@
 FROM python:3.9-alpine AS builder
 WORKDIR /opt/server
+COPY payment.ini .
+COPY *.py .
 COPY requirements.txt .
-RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
+RUN pip3 install -r requirements.txt
 
 
-
-FROM alpine:3.19
+FROM python:3.9-alpine
 RUN addgroup -S roboshop && adduser -S roboshop -G roboshop
 WORKDIR /opt/server
-COPY --from=builder /install /usr/local
+COPY --from=builder /usr/local /usr/local
 COPY payment.ini .
 COPY *.py .
 ENV CART_HOST="cart" \
@@ -21,7 +22,7 @@ ENV CART_HOST="cart" \
 RUN chown -R roboshop:roboshop /opt/server
 USER roboshop
 EXPOSE 8080
-CMD ["/usr/local/bin/uwsgi", "--ini", "payment.ini"]
+CMD ["uwsgi", "--ini", "payment.ini"]
 # COPY --chown=roboshop:roboshop payment.ini *.py requirements.txt .
 
 
