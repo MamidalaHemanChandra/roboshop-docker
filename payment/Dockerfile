@@ -1,12 +1,20 @@
 FROM python:3.9-alpine AS builder
 WORKDIR /opt/server
+RUN apk add --no-cache \
+    gcc \
+    musl-dev \
+    libffi-dev \
+    openssl-dev \
+    python3-dev 
 COPY payment.ini .
 COPY *.py .
 COPY requirements.txt .
-RUN pip3 install -r requirements.txt
+RUN pip3 install --upgrade pip && \
+    pip3 install --no-cache-dir -r requirements.txt
 
 
 FROM python:3.9-alpine
+RUN apk add --no-cache libffi openssl
 RUN addgroup -S roboshop && adduser -S roboshop -G roboshop
 WORKDIR /opt/server
 COPY --from=builder /usr/local /usr/local
