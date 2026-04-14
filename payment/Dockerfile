@@ -19,16 +19,21 @@ FROM python:3.9-slim AS builder
 
 WORKDIR /opt/server
 
-# Copy only requirements first (better caching)
+# Install build tools (if needed for compiling packages)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential gcc \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements first for caching
 COPY requirements.txt .
 
-# Install build dependencies
-RUN pip install --user --no-cache-dir -r requirements.txt
+# Install dependencies into a temporary folder
+RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
 
 # ---- Stage 2: Final runtime image ----
 FROM python:3.9-slim
 
-# Create roboshop user and group
+# Create roboshop user
 RUN useradd -m roboshop
 
 WORKDIR /opt/server
@@ -38,12 +43,9 @@ COPY payment.ini .
 COPY *.py .
 
 # Copy installed dependencies from builder
-COPY --from=builder /root/.local /root/.local
+COPY --from=builder /install /usr/local
 
-# Ensure Python can find the installed packages
-ENV PATH=/root/.local/bin:$PATH
-
-# Environment variables for services
+# Environment variables
 ENV CART_HOST="cart" \
     CART_PORT="8080" \
     USER_HOST="user" \
@@ -52,10 +54,10 @@ ENV CART_HOST="cart" \
     AMQP_USER="roboshop" \
     AMQP_PASS="roboshop123"
 
-# Switch to roboshop user
-USER roboshop
-
 EXPOSE 8080
 
-# Run the service
+# Switch to non-root user
+USER roboshop
+
 CMD ["uwsgi", "--ini", "payment.ini"]
+
