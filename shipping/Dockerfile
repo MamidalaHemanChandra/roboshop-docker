@@ -4,7 +4,6 @@ COPY pom.xml .
 COPY src ./src
 RUN mvn clean package 
 RUN mv target/shipping-1.0.jar shipping.jar
-RUN npm install
 
 
 FROM eclipse-temurin:17-jre-alpine
