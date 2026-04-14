@@ -14,15 +14,8 @@ ENV CART_ENDPOINT="cart:8080" \
 RUN chown -R roboshop:roboshop /opt/server
 USER roboshop
 EXPOSE 8080
-ENTRYPOINT sh -c '
-echo "Waiting for MySQL at $DB_HOST:3306...";
-until nc -z $DB_HOST 3306; do
-  echo "MySQL not ready, sleeping...";
-  sleep 3;
-done;
-echo "MySQL is up! Starting application...";
-exec java -jar shipping.jar
-'
+ENTRYPOINT ["sh", "-c", "sleep 30 && java -jar shipping.jar"]
+
 
 
 # FROM maven:3.9.11
