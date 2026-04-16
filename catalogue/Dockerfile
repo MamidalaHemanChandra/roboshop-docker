@@ -1,31 +1,32 @@
-FROM node:20-alpine AS builder
+FROM node:20.19.5-alpine3.21 AS build
 WORKDIR /opt/server
-COPY package.json *.js .
-RUN npm install
+COPY package.json .
+COPY *.js .
+# this may add extra cache memory
+RUN npm install 
 
 
-FROM node:20-alpine
+FROM node:20.19.5-alpine3.21
+# Create a group and user
 WORKDIR /opt/server
 RUN addgroup -S roboshop && adduser -S roboshop -G roboshop && \
     chown -R roboshop:roboshop /opt/server
 EXPOSE 8080
-LABEL project="roboshop" \
+LABEL com.project="roboshop" \
       component="catalogue" \
-      created="heman"
+      created_by="sivakumar"
 ENV MONGO="true" \
-    MONGO_URL="mongodb://mongodb:27017/catalogue" 
-COPY --from=builder --chown=roboshop:roboshop /opt/server /opt/server
+    MONGO_URL="mongodb://mongodb:27017/catalogue"
+COPY --from=build --chown=roboshop:roboshop /opt/server /opt/server
 USER roboshop
-ENTRYPOINT ["node"]
 CMD ["server.js"]
-
+ENTRYPOINT ["node"]
 
 # FROM node:20
-# EXPOSE 8080
 # WORKDIR /opt/server
 # COPY package.json .
 # COPY *.js .
 # RUN npm install
 # ENV MONGO="true" \
-#     MONGO_URL="mongodb://mongodb:27017/catalogue" 
+#     MONGO_URL="mongodb://mongodb:27017/catalogue"
 # CMD ["node", "server.js"]
